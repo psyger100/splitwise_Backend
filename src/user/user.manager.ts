@@ -1,5 +1,5 @@
 import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
-import { User } from "../utils/prisma";
+import { Friendship, User } from "../utils/prisma";
 import bcrypt from "bcrypt";
 
 export class userManager {
@@ -16,9 +16,11 @@ export class userManager {
         }
         const comparision = await bcrypt.compare(password, userinfo.password);
 
+        delete (userinfo as { password?: string }).password;
+        delete (userinfo as { refreshToken?: string }).refreshToken;
         if (comparision) {
-            const accesstoken = generateAccessToken(userinfo.id);
-            const refreshtoken = generateRefreshToken(userinfo.id);
+            const accesstoken = generateAccessToken(userinfo);
+            const refreshtoken = generateRefreshToken(userinfo);
             const UpdatedRefreshTokenResponse = await User.update({
                 where: {
                     id: userinfo.id,
@@ -70,5 +72,23 @@ export class userManager {
         } catch (error) {
             return null;
         }
+    }
+    public async addFriend(ownerId: string, email: string) {
+        const userinfo = await User.findUnique({
+            where: {
+                email,
+            },
+        });
+        if (userinfo) {
+            const friendship = await Friendship.create({
+                data: {
+                    userId1: ownerId,
+                    userId2: userinfo.id,
+                    friendshipStatus: "pending",
+                },
+            });
+            return friendship;
+        }
+        return null;
     }
 }

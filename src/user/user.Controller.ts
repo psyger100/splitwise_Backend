@@ -30,6 +30,12 @@ export class userController {
             refreshAccesstoken,
             this.logout.bind(this),
         );
+        this.router.post(
+            "/addFriend",
+            verifyJwt,
+            refreshAccesstoken,
+            this.addFriend.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         // @ts-ignore
@@ -73,5 +79,17 @@ export class userController {
         } else {
             res.status(401).json({ message: "invalid request" });
         }
+    }
+    public async addFriend(req: Request, res: Response) {
+        // TODO: make warning feature also
+        const ownerId = req.body.current_user.id;
+        const response = await this._userManager.addFriend(
+            ownerId,
+            req.body.requestEmail,
+        );
+        if (response) {
+            return res.status(200).json({ message: "Request Sent" });
+        }
+        return res.status(404).json({ message: "User not found" });
     }
 }

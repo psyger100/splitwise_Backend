@@ -15,18 +15,19 @@ export const verifyJwt = async (req: Request, res: Response, next: NextFunction)
                 accessToken,
                 process.env.ACCESS_TOKEN_SECRET as string,
             );
-            const current_user = await User.findUnique({
-                where: {
-                    id: decoded_value.user_id.id,
-                },
-            });
-            delete (current_user as { password?: string }).password;
-            delete (current_user as { refreshToken?: string }).refreshToken;
+            // console.log("this is decoded_value =>", decoded_value);
 
-            req.body.current_user = {
-                userName: current_user?.userName,
-                email: current_user?.email,
-            };
+            // const current_user = await User.findUnique({
+            //     where: {
+            //         id: decoded_value.user_id.id,
+            //     },
+            // });
+            // delete (current_user as { password?: string }).password;
+            // delete (current_user as { refreshToken?: string }).refreshToken;
+            // console.log("i am reaching here also");
+            delete (decoded_value as { iat?: number })?.iat;
+            delete (decoded_value as { exp?: number })?.exp;
+            req.body.current_user = decoded_value;
             next();
         } catch (error: any) {
             // may be token is expired or invalid refreshAccesstoken middleware will hadle it.
@@ -52,28 +53,22 @@ export const refreshAccesstoken = async (
             );
             delete (decoded_value as { iat?: number })?.iat;
             delete (decoded_value as { exp?: number })?.exp;
-            const userdets: any = await User.findUnique({
-                where: {
-                    id: decoded_value.user_id,
-                },
-            });
+            // const userdets: any = await User.findUnique({
+            //     where: {
+            //         id: decoded_value.id,
+            //     },
+            // });
 
-            if (userdets != null) {
-                const newAccesstoken = await generateAccessToken({ id: userdets.id });
-                req.body.current_user = {
-                    userName: userdets?.userName,
-                    email: userdets?.email,
-                };
-                res.clearCookie("accessToken")
-                    .cookie("accessToken", newAccesstoken, {
-                        httpOnly: true,
-                        secure: true,
-                    })
-                    .status(210);
-                next();
-            } else {
-                res.status(410).json({ message: "Invalid token user not found" });
-            }
+            const newAccesstoken = await generateAccessToken(decoded_value);
+            req.body.current_user = decoded_value;
+
+            res.clearCookie("accessToken")
+                .cookie("accessToken", newAccesstoken, {
+                    httpOnly: true,
+                    secure: true,
+                })
+                .status(210);
+            next();
         } catch (error: any) {
             console.log(error.message);
 

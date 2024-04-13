@@ -20,6 +20,17 @@ model User {
   password     String
   refreshToken String?
   groups       UserOnGroups[]
+  friendships1 Friendship[]   @relation("UserToFriendship1")
+  friendships2 Friendship[]   @relation("UserToFriendship2")
+}
+
+model Friendship {
+  id               String @id @default(uuid())
+  userId1          String
+  user1            User   @relation("UserToFriendship1", fields: [userId1], references: [id])
+  userId2          String
+  user2            User   @relation("UserToFriendship2", fields: [userId2], references: [id])
+  friendshipStatus String
 }
 
 model Group {
