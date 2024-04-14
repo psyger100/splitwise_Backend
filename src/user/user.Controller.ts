@@ -36,6 +36,12 @@ export class userController {
             refreshAccesstoken,
             this.addFriend.bind(this),
         );
+        this.router.post(
+            "/getAllFriendRequest",
+            verifyJwt,
+            refreshAccesstoken,
+            this.getAllFriendRequest.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         // @ts-ignore
@@ -83,13 +89,32 @@ export class userController {
     public async addFriend(req: Request, res: Response) {
         // TODO: make warning feature also
         const ownerId = req.body.current_user.id;
+        console.log(req.body.requestEmail);
         const response = await this._userManager.addFriend(
             ownerId,
             req.body.requestEmail,
         );
+
         if (response) {
             return res.status(200).json({ message: "Request Sent" });
         }
         return res.status(404).json({ message: "User not found" });
+    }
+    public async getAllFriendRequest(req: Request, res: Response) {
+        const currentUserId = req.body.current_user.id;
+        const allRequest = await this._userManager.getAllFriendRequest(currentUserId);
+
+        if (allRequest) {
+            if (allRequest != "error") {
+                res.status(200).json({ requests: allRequest });
+            } else {
+                res.status(500).json({ message: "server error" });
+            }
+        } else {
+            res.status(200).json({ requests: [] });
+        }
+    }
+    public async manageFriendRequest(req: Request, res: Response) {
+        const task: any = req.body.task;
     }
 }

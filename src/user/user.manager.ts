@@ -74,21 +74,53 @@ export class userManager {
         }
     }
     public async addFriend(ownerId: string, email: string) {
-        const userinfo = await User.findUnique({
-            where: {
-                email,
-            },
-        });
-        if (userinfo) {
-            const friendship = await Friendship.create({
-                data: {
-                    userId1: ownerId,
-                    userId2: userinfo.id,
-                    friendshipStatus: "pending",
+        try {
+            const userinfo = await User.findUnique({
+                where: {
+                    email,
                 },
             });
-            return friendship;
+            if (userinfo) {
+                const friendship = await Friendship.create({
+                    data: {
+                        userId1: ownerId,
+                        userId2: userinfo.id,
+                        friendshipStatus: "pending",
+                    },
+                });
+                return friendship;
+            }
+            return null;
+        } catch (error) {
+            return null;
         }
-        return null;
+    }
+    public async getAllFriendRequest(currentUserId: any) {
+        try {
+            const incomingRequest = await Friendship.findMany({
+                where: {
+                    AND: [{ userId2: currentUserId }, { friendshipStatus: "pending" }],
+                },
+                select: {
+                    id: true,
+                    friendshipStatus: true,
+                    user1: {
+                        select: {
+                            userName: true,
+                            email: true,
+                        },
+                    },
+                },
+            });
+
+            if (incomingRequest.length > 0) {
+                return incomingRequest;
+            } else {
+                return null;
+            }
+        } catch (error: any) {
+            console.log("This is error ", error.message);
+            return "error";
+        }
     }
 }
