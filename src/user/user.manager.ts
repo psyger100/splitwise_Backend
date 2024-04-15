@@ -123,4 +123,15 @@ export class userManager {
             return "error";
         }
     }
+    public async rejectRequest(psId: string, userId: string) {
+        try {
+            const operationResponse = await Friendship.delete({
+                where: { id: psId },
+            });
+            return operationResponse;
+        } catch (error: any) {
+            console.log(error.message);
+            return null;
+        }
+    }
 }

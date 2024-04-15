@@ -36,11 +36,17 @@ export class userController {
             refreshAccesstoken,
             this.addFriend.bind(this),
         );
-        this.router.post(
+        this.router.get(
             "/getAllFriendRequest",
             verifyJwt,
             refreshAccesstoken,
             this.getAllFriendRequest.bind(this),
+        );
+        this.router.post(
+            "/rejectRequest",
+            verifyJwt,
+            refreshAccesstoken,
+            this.rejectRequest.bind(this),
         );
     }
     public async home(req: Request, res: Response) {
@@ -55,11 +61,22 @@ export class userController {
         if (user === null) {
             res.status(401).json({ message: "Email or Password is wrong" });
         } else {
+            const options = {
+                httpOnly: true,
+                secure: true,
+            };
+
             res.status(200)
                 .clearCookie("accessToken")
                 .clearCookie("refreshToken")
-                .cookie("refreshToken", user?.refreshtoken)
-                .cookie("accessToken", user?.accesstoken)
+                .cookie("refreshToken", user?.refreshtoken, {
+                    ...options,
+                    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                })
+                .cookie("accessToken", user?.accesstoken, {
+                    ...options,
+                    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                })
                 .json({ userName: user?.userName, email: user?.email });
         }
     }
@@ -73,6 +90,9 @@ export class userController {
         }
     }
     public async me(req: Request, res: Response) {
+        // TODO: add id to the token
+        const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+
         res.status(200).json({ ...req.body.current_user });
     }
     public async logout(req: Request, res: Response) {
@@ -114,7 +134,15 @@ export class userController {
             res.status(200).json({ requests: [] });
         }
     }
-    public async manageFriendRequest(req: Request, res: Response) {
-        const task: any = req.body.task;
+    public async rejectRequest(req: Request, res: Response) {
+        const response = await this._userManager.rejectRequest(
+            req.body.id,
+            req.body.current_user.id,
+        );
+        if (response) {
+            res.status(200).send("task successFull");
+        } else {
+            res.status(500).send("server error");
+        }
     }
 }
