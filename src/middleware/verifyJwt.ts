@@ -3,10 +3,18 @@ import jwt, { decode, verify } from "jsonwebtoken";
 import { User } from "../utils/prisma";
 import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
 
+const options = {
+    httpOnly: true,
+    secure: true,
+};
 export const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
     const accessToken =
         req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer", "");
     if (!accessToken) {
+        console.log(req.cookies);
+
+        console.log("no access toekn");
+
         //may be refresh Token exist refrestAccessTokenMiddleware will handle it.
         next();
     } else {
@@ -44,6 +52,8 @@ export const refreshAccesstoken = async (
     if (req.body.current_user) {
         next();
     } else if (!refreshToken) {
+        console.log("refresh token not found");
+
         res.status(410).json({ message: "Login required" });
     } else if (refreshToken) {
         try {
@@ -64,8 +74,8 @@ export const refreshAccesstoken = async (
 
             res.clearCookie("accessToken")
                 .cookie("accessToken", newAccesstoken, {
-                    httpOnly: true,
-                    secure: true,
+                    ...options,
+                    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
                 })
                 .status(210);
             next();

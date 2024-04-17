@@ -91,7 +91,8 @@ export class userController {
     }
     public async me(req: Request, res: Response) {
         // TODO: add id to the token
-        const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        // const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+        console.log(req.body.current_user);
 
         res.status(200).json({ ...req.body.current_user });
     }
