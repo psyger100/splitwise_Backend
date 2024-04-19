@@ -26,10 +26,10 @@ model User {
 
 model Friendship {
   id               String @id @default(uuid())
-  userId1          String
-  user1            User   @relation("UserToFriendship1", fields: [userId1], references: [id])
-  userId2          String
-  user2            User   @relation("UserToFriendship2", fields: [userId2], references: [id])
+  sender           String @default("")
+  user1            User   @relation("UserToFriendship1", fields: [sender], references: [id])
+  receiver         String @default("")
+  user2            User   @relation("UserToFriendship2", fields: [receiver], references: [id])
   friendshipStatus String
 }
 

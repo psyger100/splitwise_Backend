@@ -83,8 +83,8 @@ export class userManager {
             if (userinfo) {
                 const friendship = await Friendship.create({
                     data: {
-                        userId1: ownerId,
-                        userId2: userinfo.id,
+                        sender: ownerId,
+                        receiver: userinfo.id,
                         friendshipStatus: "pending",
                     },
                 });
@@ -99,7 +99,7 @@ export class userManager {
         try {
             const incomingRequest = await Friendship.findMany({
                 where: {
-                    AND: [{ userId2: currentUserId }, { friendshipStatus: "pending" }],
+                    AND: [{ receiver: currentUserId }, { friendshipStatus: "pending" }],
                 },
                 select: {
                     id: true,
@@ -123,14 +123,78 @@ export class userManager {
             return "error";
         }
     }
-    public async rejectRequest(psId: string, userId: string) {
+    public async rejectRequest(postgresId: string) {
+        //psid stands for postgresid
         try {
             const operationResponse = await Friendship.delete({
-                where: { id: psId },
+                where: { id: postgresId },
             });
             return operationResponse;
         } catch (error: any) {
             console.log(error.message);
+            return null;
+        }
+    }
+    public async acceptRequest(postgresId: string) {
+        try {
+            const operationResponse = await Friendship.update({
+                where: { id: postgresId },
+                data: {
+                    friendshipStatus: "Accepted",
+                },
+            });
+            return operationResponse;
+        } catch (error: any) {
+            console.log(error.message);
+            return null;
+        }
+    }
+    public async allFriends(currentUserId: any) {
+        try {
+            let friends: any[] = [];
+            const friendsbyGettingRequest = await Friendship.findMany({
+                where: {
+                    receiver: currentUserId,
+                    friendshipStatus: "Accepted",
+                },
+                select: {
+                    user1: {
+                        select: {
+                            id: true,
+                            userName: true,
+                            email: true,
+                        },
+                    },
+                },
+            });
+            const friendsbySendingRequest = await Friendship.findMany({
+                where: {
+                    sender: currentUserId,
+                    friendshipStatus: "Accepted",
+                },
+                select: {
+                    user2: {
+                        select: {
+                            id: true,
+                            userName: true,
+                            email: true,
+                        },
+                    },
+                },
+            });
+
+            friends = [
+                ...friendsbyGettingRequest.map((item) => item.user1),
+                ...friendsbySendingRequest.map((item) => item.user2),
+            ];
+
+            if (friends.length > 0) {
+                return friends;
+            } else {
+                return [];
+            }
+        } catch (error: any) {
+            console.log("This is error ", error.message);
             return null;
         }
     }

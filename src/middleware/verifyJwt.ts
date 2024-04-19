@@ -1,25 +1,22 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { decode, verify } from "jsonwebtoken";
-import { User } from "../utils/prisma";
-import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
+import jwt from "jsonwebtoken";
+import { generateAccessToken } from "../utils/Tokens";
 
 const options = {
     httpOnly: true,
     secure: true,
 };
 export const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
+    // TODO: migrate to localstorage
     const accessToken =
         req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer", "");
+
     if (!accessToken) {
-        console.log(req.cookies);
-
-        console.log("no access toekn");
-
         //may be refresh Token exist refrestAccessTokenMiddleware will handle it.
         next();
     } else {
         try {
-            const decoded_value: any = jwt.verify(
+            const decoded_value: any = await jwt.verify(
                 accessToken,
                 process.env.ACCESS_TOKEN_SECRET as string,
             );
@@ -31,8 +28,8 @@ export const verifyJwt = async (req: Request, res: Response, next: NextFunction)
             //     },
             // });
             // delete (current_user as { password?: string }).password;
-            // delete (current_user as { refreshToken?: string }).refreshToken;
-            // console.log("i am reaching here also");
+            //(current_user as { refreshToken?: string }).refreshToken;
+
             delete (decoded_value as { iat?: number })?.iat;
             delete (decoded_value as { exp?: number })?.exp;
             req.body.current_user = decoded_value;
@@ -49,15 +46,14 @@ export const refreshAccesstoken = async (
     next: NextFunction,
 ) => {
     const refreshToken = req.cookies?.refreshToken;
+
     if (req.body.current_user) {
         next();
     } else if (!refreshToken) {
-        console.log("refresh token not found");
-
-        res.status(410).json({ message: "Login required" });
+        res.status(401).json({ message: "Login Required" });
     } else if (refreshToken) {
         try {
-            const decoded_value: any = jwt.verify(
+            const decoded_value: any = await jwt.verify(
                 refreshToken,
                 process.env.REFRESH_TOKEN_SECRET as string,
             );

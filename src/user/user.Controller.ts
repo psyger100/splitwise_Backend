@@ -48,11 +48,20 @@ export class userController {
             refreshAccesstoken,
             this.rejectRequest.bind(this),
         );
+        this.router.post(
+            "/acceptRequest",
+            verifyJwt,
+            refreshAccesstoken,
+            this.acceptRequest.bind(this),
+        );
+        this.router.get(
+            "/allFriends",
+            verifyJwt,
+            refreshAccesstoken,
+            this.allFriends.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
-        // @ts-ignore
-        console.log(req.body.current_user);
-
         res.status(200).json({ message: "welcome to home." });
     }
     public async login(req: Request, res: Response) {
@@ -64,6 +73,7 @@ export class userController {
             const options = {
                 httpOnly: true,
                 secure: true,
+                sameSite: true,
             };
 
             res.status(200)
@@ -92,7 +102,6 @@ export class userController {
     public async me(req: Request, res: Response) {
         // TODO: add id to the token
         // const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-        console.log(req.body.current_user);
 
         res.status(200).json({ ...req.body.current_user });
     }
@@ -110,7 +119,7 @@ export class userController {
     public async addFriend(req: Request, res: Response) {
         // TODO: make warning feature also
         const ownerId = req.body.current_user.id;
-        console.log(req.body.requestEmail);
+
         const response = await this._userManager.addFriend(
             ownerId,
             req.body.requestEmail,
@@ -136,14 +145,27 @@ export class userController {
         }
     }
     public async rejectRequest(req: Request, res: Response) {
-        const response = await this._userManager.rejectRequest(
-            req.body.id,
-            req.body.current_user.id,
-        );
+        const response = await this._userManager.rejectRequest(req.body.id);
         if (response) {
-            res.status(200).send("task successFull");
+            res.status(200).json({ message: "request rejected" });
         } else {
-            res.status(500).send("server error");
+            res.status(500).json({ message: "server error" });
         }
+    }
+    public async acceptRequest(req: Request, res: Response) {
+        const response = await this._userManager.acceptRequest(req.body.id);
+        if (response) {
+            res.status(200).json({ message: "request Accepted" });
+        } else {
+            res.status(500).json({ message: "server error" });
+        }
+    }
+    public async allFriends(req: Request, res: Response) {
+        const response = await this._userManager.allFriends(req.body.current_user.id);
+        if (response) {
+            return res.status(200).json({ friends: response });
+        }
+
+        return res.status(500).json({ error: "can't fetch Friends" });
     }
 }
