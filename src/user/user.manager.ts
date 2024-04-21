@@ -1,5 +1,5 @@
 import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
-import { Friendship, User } from "../utils/prisma";
+import { Friendship, Members, User, Group } from "../utils/prisma";
 import bcrypt from "bcrypt";
 
 export class userManager {
@@ -197,5 +197,107 @@ export class userManager {
             console.log("This is error ", error.message);
             return null;
         }
+    }
+    public async fetchGroups(currentUserId: string) {
+        const groups = await Members.findMany({
+            where: {
+                userId: currentUserId,
+            },
+            select: {
+                Group: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+
+        const allGroupsWithAllMembers = await Members.findMany({
+            where: {
+                groupId: {
+                    in: groups
+                        .map((item) => item.Group?.id)
+                        .filter((id): id is string => id !== undefined),
+                },
+            },
+            select: {
+                User: {
+                    select: {
+                        id: true,
+                        userName: true,
+                        email: true,
+                    },
+                },
+                Group: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+
+        let refinedData: any = [];
+
+        allGroupsWithAllMembers.map((item) => {
+            const flag = refinedData.some(
+                (element: any) => element.id === item.Group?.id,
+            );
+            if (!flag) {
+                refinedData.push({
+                    id: item.Group?.id,
+                    name: item.Group?.name,
+                    members: [
+                        {
+                            id: item.User?.id,
+                            userName: item.User?.userName,
+                            email: item.User?.email,
+                        },
+                    ],
+                });
+            } else {
+                refinedData = refinedData.map((element: any) => {
+                    if (element.id === item.Group?.id) {
+                        return {
+                            ...element,
+                            members: [
+                                ...element.members,
+                                {
+                                    id: item.User?.id,
+                                    userName: item.User?.userName,
+                                    email: item.User?.email,
+                                },
+                            ],
+                        };
+                    }
+                    return element;
+                });
+            }
+        });
+
+        return refinedData;
+    }
+    public async createGroup(
+        information: { name: string; members: string[] },
+        currentUserId: string,
+    ) {
+        const group = await Group.create({
+            data: {
+                name: information.name,
+            },
+        });
+
+        const members = information.members.map((item) => {
+            return {
+                userId: item,
+                groupId: group.id,
+            };
+        });
+
+        const membersResponse = await Members.createMany({
+            data: [...members, { userId: currentUserId, groupId: group.id }],
+        });
+        return membersResponse;
     }
 }

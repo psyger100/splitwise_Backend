@@ -60,6 +60,18 @@ export class userController {
             refreshAccesstoken,
             this.allFriends.bind(this),
         );
+        this.router.get(
+            "/fetchGroups",
+            verifyJwt,
+            refreshAccesstoken,
+            this.fetchGroups.bind(this),
+        );
+        this.router.post(
+            "/createGroup",
+            verifyJwt,
+            refreshAccesstoken,
+            this.createGroup.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         res.status(200).json({ message: "welcome to home." });
@@ -167,5 +179,21 @@ export class userController {
         }
 
         return res.status(500).json({ error: "can't fetch Friends" });
+    }
+    public async fetchGroups(req: Request, res: Response) {
+        const currentUserId = req.body.current_user.id;
+        const userGroups = await this._userManager.fetchGroups(currentUserId);
+        return res.status(200).json(userGroups);
+    }
+    public async createGroup(req: Request, res: Response) {
+        const information = req.body.createGroup;
+        const response = await this._userManager.createGroup(
+            req.body.createGroup,
+            req.body.current_user.id,
+        );
+        if (response) {
+            return res.status(200).json({ message: "group created" });
+        }
+        return res.status(500).json({ message: "server error" });
     }
 }
