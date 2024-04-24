@@ -14,14 +14,17 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(uuid())
+  id           String               @id @default(uuid())
   userName     String
-  email        String         @unique
+  email        String               @unique
   password     String
   refreshToken String?
   groups       UserOnGroups[]
-  friendships1 Friendship[]   @relation("UserToFriendship1")
-  friendships2 Friendship[]   @relation("UserToFriendship2")
+  friendships1 Friendship[]         @relation("UserToFriendship1")
+  friendships2 Friendship[]         @relation("UserToFriendship2")
+  initiator    TransactionEntries[] @relation("TransactionEntryInitiator")
+  Tsender      TransactionEntries[] @relation("TransactionEntriesSender")
+  Treceiver    TransactionEntries[] @relation("TransactionEntriesReveiver")
 }
 
 model Friendship {
@@ -34,9 +37,10 @@ model Friendship {
 }
 
 model Group {
-  id    String         @id @default(uuid())
-  name  String
-  users UserOnGroups[]
+  id          String         @id @default(uuid())
+  name        String
+  users       UserOnGroups[]
+  Transaction Transaction[]
 }
 
 model UserOnGroups {
@@ -45,4 +49,25 @@ model UserOnGroups {
   User    User?   @relation(fields: [userId], references: [id])
   groupId String?
   Group   Group?  @relation(fields: [groupId], references: [id])
+}
+
+model Transaction {
+  id                 String               @id @default(uuid())
+  groupId            String
+  Group              Group?               @relation(fields: [groupId], references: [id])
+  Description        String?
+  TransactionEntries TransactionEntries[]
+}
+
+model TransactionEntries {
+  id            String      @id @default(uuid())
+  transactionId String
+  Transaction   Transaction @relation(fields: [transactionId], references: [id])
+  initiator     String
+  user1         User        @relation("TransactionEntryInitiator", fields: [initiator], references: [id])
+  Sender        String
+  user2         User        @relation("TransactionEntriesSender", fields: [Sender], references: [id])
+  Receiver      String
+  user3         User        @relation("TransactionEntriesReveiver", fields: [Receiver], references: [id])
+  Amount        Int
 }
