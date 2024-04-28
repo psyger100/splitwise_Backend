@@ -182,7 +182,7 @@ export class userController {
     }
     public async fetchGroups(req: Request, res: Response) {
         const currentUserId = req.body.current_user.id;
-        const userGroups = await this._userManager.fetchGroups(currentUserId);
+        const userGroups = await this._userManager.fetchGroupsWithMembers(currentUserId);
         return res.status(200).json(userGroups);
     }
     public async createGroup(req: Request, res: Response) {

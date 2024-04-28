@@ -198,85 +198,31 @@ export class userManager {
             return null;
         }
     }
-    public async fetchGroups(currentUserId: string) {
-        const groups = await Members.findMany({
+    public async fetchGroupsWithMembers(currentUserId: string) {
+        const groupsNew = await Group.findMany({
             where: {
-                userId: currentUserId,
-            },
-            select: {
-                Group: {
-                    select: {
-                        id: true,
-                        name: true,
+                users: {
+                    some: {
+                        userId: currentUserId,
                     },
                 },
             },
-        });
-
-        const allGroupsWithAllMembers = await Members.findMany({
-            where: {
-                groupId: {
-                    in: groups
-                        .map((item) => item.Group?.id)
-                        .filter((id): id is string => id !== undefined),
-                },
-            },
-            select: {
-                User: {
+            include: {
+                users: {
                     select: {
-                        id: true,
-                        userName: true,
-                        email: true,
-                    },
-                },
-                Group: {
-                    select: {
-                        id: true,
-                        name: true,
-                    },
-                },
-            },
-        });
-
-        let refinedData: any = [];
-
-        allGroupsWithAllMembers.map((item) => {
-            const flag = refinedData.some(
-                (element: any) => element.id === item.Group?.id,
-            );
-            if (!flag) {
-                refinedData.push({
-                    id: item.Group?.id,
-                    name: item.Group?.name,
-                    members: [
-                        {
-                            id: item.User?.id,
-                            userName: item.User?.userName,
-                            email: item.User?.email,
+                        User: {
+                            select: {
+                                id: true,
+                                userName: true,
+                                email: true,
+                            },
                         },
-                    ],
-                });
-            } else {
-                refinedData = refinedData.map((element: any) => {
-                    if (element.id === item.Group?.id) {
-                        return {
-                            ...element,
-                            members: [
-                                ...element.members,
-                                {
-                                    id: item.User?.id,
-                                    userName: item.User?.userName,
-                                    email: item.User?.email,
-                                },
-                            ],
-                        };
-                    }
-                    return element;
-                });
-            }
+                    },
+                },
+            },
         });
 
-        return refinedData;
+        return groupsNew;
     }
     public async createGroup(
         information: { name: string; members: string[] },
