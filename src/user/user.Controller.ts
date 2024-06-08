@@ -72,6 +72,12 @@ export class userController {
             refreshAccesstoken,
             this.createGroup.bind(this),
         );
+        this.router.post(
+            "/createTransaction",
+            verifyJwt,
+            refreshAccesstoken,
+            this.createTransaction.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         res.status(200).json({ message: "welcome to home." });
@@ -195,5 +201,12 @@ export class userController {
             return res.status(200).json({ message: "group created" });
         }
         return res.status(500).json({ message: "server error" });
+    }
+    public async createTransaction(req: Request, res: Response) {
+        const tDetail = req.body.transaction;
+        console.log("critical damage");
+
+        console.log(tDetail);
+        res.status(200).json({ message: "god some data" });
     }
 }

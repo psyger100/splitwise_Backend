@@ -246,4 +246,7 @@ export class userManager {
         });
         return membersResponse;
     }
+    public async createTransaction(transactionDetails:{descriptioin:string,sender:string,reciever:string,amount:string,groupid:string}){
+        
+    }
 }
