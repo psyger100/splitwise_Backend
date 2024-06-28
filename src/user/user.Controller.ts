@@ -192,7 +192,6 @@ export class userController {
         return res.status(200).json(userGroups);
     }
     public async createGroup(req: Request, res: Response) {
-        const information = req.body.createGroup;
         const response = await this._userManager.createGroup(
             req.body.createGroup,
             req.body.current_user.id,
@@ -203,10 +202,9 @@ export class userController {
         return res.status(500).json({ message: "server error" });
     }
     public async createTransaction(req: Request, res: Response) {
-        const tDetail = req.body.transaction;
-        console.log("critical damage");
+        const transactionDetails = req.body.createTransaction;
+        const response = await this._userManager.createTransaction(transactionDetails);
 
-        console.log(tDetail);
-        res.status(200).json({ message: "god some data" });
+        res.status(200).json({ response });
     }
 }

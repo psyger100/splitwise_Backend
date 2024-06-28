@@ -5,3 +5,5 @@ export const User = prisma.user;
 export const Friendship = prisma.friendship;
 export const Members = prisma.userOnGroups;
 export const Group = prisma.group;
+export const Transaction = prisma.transaction;
+export const TransactionEntries = prisma.transactionEntries;

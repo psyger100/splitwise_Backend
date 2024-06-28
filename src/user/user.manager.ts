@@ -1,7 +1,23 @@
 import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
-import { Friendship, Members, User, Group } from "../utils/prisma";
+import {
+    Friendship,
+    Members,
+    User,
+    Group,
+    Transaction,
+    TransactionEntries,
+} from "../utils/prisma";
 import bcrypt from "bcrypt";
 
+interface Transaction {
+    groupId: string;
+    Description: string;
+    Transaction: {
+        Sender: string;
+        Receiver: string;
+        Amount: string | number;
+    }[];
+}
 export class userManager {
     constructor() {}
     public async login(email: string, password: string) {
@@ -246,7 +262,27 @@ export class userManager {
         });
         return membersResponse;
     }
-    public async createTransaction(transactionDetails:{descriptioin:string,sender:string,reciever:string,amount:string,groupid:string}){
-        
+    public async createTransaction(transactionDetails: Transaction) {
+        try {
+            console.log("these are transaction details ", transactionDetails);
+
+            const transactionTableData = await Transaction.create({
+                data: {
+                    groupId: transactionDetails.groupId,
+                    Description: transactionDetails.Description,
+                },
+            });
+
+            const transactionEntriesData = await TransactionEntries.createMany({
+                data: transactionDetails.Transaction.map((item: any) => ({
+                    ...item,
+                    transactionId: transactionTableData.id,
+                })),
+            });
+            console.log(transactionEntriesData);
+            return transactionEntriesData;
+        } catch (error) {
+            console.log(error);
+        }
     }
 }
