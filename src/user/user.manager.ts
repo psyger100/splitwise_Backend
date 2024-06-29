@@ -161,7 +161,6 @@ export class userManager {
             });
             return operationResponse;
         } catch (error: any) {
-            console.log(error.message);
             return null;
         }
     }
@@ -210,7 +209,6 @@ export class userManager {
                 return [];
             }
         } catch (error: any) {
-            console.log("This is error ", error.message);
             return null;
         }
     }
@@ -264,8 +262,6 @@ export class userManager {
     }
     public async createTransaction(transactionDetails: Transaction) {
         try {
-            console.log("these are transaction details ", transactionDetails);
-
             const transactionTableData = await Transaction.create({
                 data: {
                     groupId: transactionDetails.groupId,
@@ -279,10 +275,74 @@ export class userManager {
                     transactionId: transactionTableData.id,
                 })),
             });
-            console.log(transactionEntriesData);
+
             return transactionEntriesData;
         } catch (error) {
             console.log(error);
         }
+    }
+    public async getAllTransaction(currentUserId: string, gId: any) {
+        try {
+            const allTransaction = await Transaction.findMany({
+                where: {
+                    groupId: gId,
+                    Group: {
+                        users: {
+                            some: {
+                                userId: currentUserId,
+                            },
+                        },
+                    },
+                },
+                include: {
+                    TransactionEntries: {
+                        select: {
+                            Amount: true,
+                            user1: {
+                                select: {
+                                    id: true,
+                                    userName: true,
+                                },
+                            },
+                            user2: {
+                                select: {
+                                    id: true,
+                                    userName: true,
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+            console.log(allTransaction);
+
+            return allTransaction;
+        } catch (error: any) {
+            return error.message;
+        }
+        // const allGroups = await Group.findMany({
+        //     where: {
+        //         users: {
+        //             some: {
+        //                 userId: currentUserId,
+        //             },
+        //         },
+        //     },
+        //     include: {
+        //         Transaction: {
+        //             select: {
+        //                 Description: true,
+        //                 TransactionEntries: {
+        //                     select: {
+        //                         Sender: true,
+        //                         Receiver: true,
+        //                         Amount: true,
+        //                     },
+        //                 },
+        //             },
+        //         },
+        //     },
+        // });
+        // return allGroups;
     }
 }

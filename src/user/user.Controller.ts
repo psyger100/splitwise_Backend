@@ -78,6 +78,12 @@ export class userController {
             refreshAccesstoken,
             this.createTransaction.bind(this),
         );
+        this.router.post(
+            "/getAllTransaction",
+            verifyJwt,
+            refreshAccesstoken,
+            this.getAllTransaction.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         res.status(200).json({ message: "welcome to home." });
@@ -204,7 +210,21 @@ export class userController {
     public async createTransaction(req: Request, res: Response) {
         const transactionDetails = req.body.createTransaction;
         const response = await this._userManager.createTransaction(transactionDetails);
+        if (response) {
+            res.status(200).json({ response });
+        }
 
-        res.status(200).json({ response });
+        return res.send(500).json("server error");
+    }
+    public async getAllTransaction(req: Request, res: Response) {
+        const allTransaction = await this._userManager.getAllTransaction(
+            req.body.current_user.id,
+            req.body.groupId,
+        );
+        if (allTransaction) {
+            return res.status(200).json(allTransaction);
+        }
+        return res.status(200).json("jai shri ram");
+        return res.send(500).json("server error");
     }
 }
