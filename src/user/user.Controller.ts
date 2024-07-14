@@ -224,7 +224,6 @@ export class userController {
         if (allTransaction) {
             return res.status(200).json(allTransaction);
         }
-        return res.status(200).json("jai shri ram");
-        return res.send(500).json("server error");
+        return res.status(500).json("serverError");
     }
 }

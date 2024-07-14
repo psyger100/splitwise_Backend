@@ -8,7 +8,6 @@ import {
     TransactionEntries,
 } from "../utils/prisma";
 import bcrypt from "bcrypt";
-
 interface Transaction {
     groupId: string;
     Description: string;
@@ -314,35 +313,10 @@ export class userManager {
                     },
                 },
             });
-            console.log(allTransaction);
 
             return allTransaction;
         } catch (error: any) {
             return error.message;
         }
-        // const allGroups = await Group.findMany({
-        //     where: {
-        //         users: {
-        //             some: {
-        //                 userId: currentUserId,
-        //             },
-        //         },
-        //     },
-        //     include: {
-        //         Transaction: {
-        //             select: {
-        //                 Description: true,
-        //                 TransactionEntries: {
-        //                     select: {
-        //                         Sender: true,
-        //                         Receiver: true,
-        //                         Amount: true,
-        //                     },
-        //                 },
-        //             },
-        //         },
-        //     },
-        // });
-        // return allGroups;
     }
 }
