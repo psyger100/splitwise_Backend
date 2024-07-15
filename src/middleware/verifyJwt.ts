@@ -7,9 +7,7 @@ const options = {
     secure: true,
 };
 export const verifyJwt = async (req: Request, res: Response, next: NextFunction) => {
-    // TODO: migrate to localstorage
-    const accessToken =
-        req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer", "");
+    const accessToken = req.header("accessToken");
 
     if (!accessToken) {
         //may be refresh Token exist refrestAccessTokenMiddleware will handle it.
@@ -35,7 +33,8 @@ export const verifyJwt = async (req: Request, res: Response, next: NextFunction)
             req.body.current_user = decoded_value;
             next();
         } catch (error: any) {
-            // may be token is expired or invalid refreshAccesstoken middleware will hadle it.
+            console.log("Access token expired");
+
             next();
         }
     }
@@ -45,7 +44,7 @@ export const refreshAccesstoken = async (
     res: Response,
     next: NextFunction,
 ) => {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = req.header("refreshToken");
 
     if (req.body.current_user) {
         next();
@@ -67,17 +66,12 @@ export const refreshAccesstoken = async (
 
             const newAccesstoken = await generateAccessToken(decoded_value);
             req.body.current_user = decoded_value;
+            req.body.current_user.setAccessToken = newAccesstoken;
 
-            res.clearCookie("accessToken")
-                .cookie("accessToken", newAccesstoken, {
-                    ...options,
-                    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                })
-                .status(210);
+            // res.json({ setAccessToken: newAccesstoken });
+            // res.setAccessToken = newAccesstoken;
             next();
         } catch (error: any) {
-            console.log(error.message);
-
             res.status(401).json({ message: "Login Required" });
         }
     }

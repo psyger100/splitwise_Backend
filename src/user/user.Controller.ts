@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { catchAsync } from "../utils/catchAsyncWrapper";
 import { userManager } from "./user.manager";
 import { refreshAccesstoken, verifyJwt } from "../middleware/verifyJwt";
+import { SEE_OTHER } from "http-status";
 
 export class userController {
     public router = Router();
@@ -12,7 +13,7 @@ export class userController {
     private initializeRoutes() {
         this.router.post("/login", catchAsync(this.login.bind(this)));
         this.router.post("/signup", catchAsync(this.signup.bind(this)));
-        this.router.post(
+        this.router.get(
             "/",
             verifyJwt,
             refreshAccesstoken,
@@ -99,19 +100,12 @@ export class userController {
                 secure: true,
                 sameSite: true,
             };
-
-            res.status(200)
-                .clearCookie("accessToken")
-                .clearCookie("refreshToken")
-                .cookie("refreshToken", user?.refreshtoken, {
-                    ...options,
-                    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                })
-                .cookie("accessToken", user?.accesstoken, {
-                    ...options,
-                    expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                })
-                .json({ userName: user?.userName, email: user?.email });
+            res.status(200).json({
+                userName: user?.userName,
+                email: user?.email,
+                setAccessToken: user?.accessToken,
+                setRefreshToken: user?.rt,
+            });
         }
     }
     public async signup(req: Request, res: Response) {
@@ -124,18 +118,12 @@ export class userController {
         }
     }
     public async me(req: Request, res: Response) {
-        // TODO: add id to the token
-        // const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-
         res.status(200).json({ ...req.body.current_user });
     }
     public async logout(req: Request, res: Response) {
         const response = await this._userManager.logout(req.body.current_user.email);
         if (response) {
-            res.status(200)
-                .clearCookie("accessToken")
-                .clearCookie("refreshToken")
-                .json({ message: "user Logged Out" });
+            res.status(200).json({ message: "user Logged Out", logout: true });
         } else {
             res.status(401).json({ message: "invalid request" });
         }

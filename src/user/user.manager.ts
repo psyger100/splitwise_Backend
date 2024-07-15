@@ -1,4 +1,5 @@
 import { generateAccessToken, generateRefreshToken } from "../utils/Tokens";
+import jwt from "jsonwebtoken";
 import {
     Friendship,
     Members,
@@ -34,18 +35,28 @@ export class userManager {
         delete (userinfo as { password?: string }).password;
         delete (userinfo as { refreshToken?: string }).refreshToken;
         if (comparision) {
-            const accesstoken = generateAccessToken(userinfo);
-            const refreshtoken = generateRefreshToken(userinfo);
+            const accessToken = generateAccessToken(userinfo);
+            const rt = generateRefreshToken(userinfo);
             const UpdatedRefreshTokenResponse = await User.update({
                 where: {
                     id: userinfo.id,
                 },
                 data: {
-                    refreshToken: refreshtoken,
+                    refreshToken: rt,
                 },
             });
+            try {
+                if (rt) {
+                    const abc = await jwt.verify(
+                        rt,
+                        process.env.REFRESH_TOKEN_SECRET as string,
+                    );
+                }
+            } catch (error: any) {
+                console.log("This is error ", error.message);
+            }
             if (UpdatedRefreshTokenResponse) {
-                return { accesstoken, refreshtoken, ...userinfo };
+                return { accessToken, rt, ...userinfo };
             }
         } else {
             return null;
