@@ -85,6 +85,12 @@ export class userController {
             refreshAccesstoken,
             this.getAllTransaction.bind(this),
         );
+        this.router.post(
+            "/deleteTransaction",
+            verifyJwt,
+            refreshAccesstoken,
+            this.deleteTransaction.bind(this),
+        );
     }
     public async home(req: Request, res: Response) {
         res.status(200).json({ message: "welcome to home." });
@@ -198,20 +204,43 @@ export class userController {
     public async createTransaction(req: Request, res: Response) {
         const transactionDetails = req.body.createTransaction;
         const response = await this._userManager.createTransaction(transactionDetails);
-        if (response) {
-            res.status(200).json({ response });
+        try {
+            if (response) {
+                return res.status(200).json({ response });
+            } else {
+                return res.send(500).json("server error");
+            }
+        } catch (error: any) {
+            console.log(error.message);
         }
-
-        return res.send(500).json("server error");
     }
     public async getAllTransaction(req: Request, res: Response) {
         const allTransaction = await this._userManager.getAllTransaction(
             req.body.current_user.id,
             req.body.groupId,
         );
-        if (allTransaction) {
-            return res.status(200).json(allTransaction);
+        try {
+            if (allTransaction) {
+                return res.status(200).json(allTransaction);
+            }
+            return res.status(500).json("serverError");
+        } catch (error: any) {
+            console.log(error.message);
         }
-        return res.status(500).json("serverError");
+    }
+    public async deleteTransaction(req: Request, res: Response) {
+        try {
+            console.log(req.body);
+
+            const transactionId = req.body.tId;
+            if (transactionId) {
+                await this._userManager.deleteTransaction(req.body.tId);
+                return res.status(200).json({ message: "transaction deleted" });
+            }
+            return res.status(500).json({ message: "server error" });
+        } catch (error: any) {
+            console.log(error.message);
+            return res.status(500).json({ message: "server error" });
+        }
     }
 }

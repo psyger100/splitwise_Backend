@@ -330,4 +330,37 @@ export class userManager {
             return error.message;
         }
     }
+    public async deleteTransaction(tId: string) {
+        const t = await Transaction.findUnique({
+            where: {
+                id: tId,
+            },
+        });
+        const tData = await TransactionEntries.findMany({
+            where: {
+                transactionId: tId,
+            },
+        });
+        try {
+            const data = await TransactionEntries.deleteMany({
+                where: {
+                    transactionId: tId,
+                },
+            });
+            if (data) {
+                const d2 = await Transaction.delete({
+                    where: {
+                        id: tId,
+                    },
+                });
+
+                if (d2) {
+                    return true;
+                }
+            }
+        } catch (error: any) {
+            //TODO: update deleted entry again if something fails
+        }
+        return false;
+    }
 }
